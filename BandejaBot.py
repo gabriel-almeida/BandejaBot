@@ -18,6 +18,7 @@ MENSAGEM_START = """
         (apartir de 14h é considerado jantar);
         <b>/semana</b>: Cardápio da um dia arbitrário da semana, que o bot irá perguntar, para uma resposta direta,\
         use comandos como <i>Almoço de Segunda</i>;
+        <b>/horarios</b>: Horários de funcionamento dos diversos restaurantes;
         <b>/help</b>: Exibe este diálogo.
         """
 
