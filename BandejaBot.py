@@ -23,21 +23,21 @@ MENSAGEM_START = """
         """
 
 MENSAGEM_HORARIOS = """
-<i>De Segunda a Sexta</i>:
-<b>Central</b>:
-    <i>Almoço</i>: 11h-14h
-    <i>Jantar</i>: 17:30h-20:00h
-<b>CT</b>:
-    <i>Almoço</i>: 10:30h-14:30h
-    <i>Jantar</i>: 17:30h-20:00h
-<b>Letras</b>:
-    <i>Almoço</i>: 11:15h-14:00h
-    <i>Jantar</i>: 17:30h-20:00h
+        <i>De Segunda a Sexta</i>:
+        <b>Central</b>:
+            <i>Almoço</i>: 11h-14h
+            <i>Jantar</i>: 17:30h-20:00h
+        <b>CT</b>:
+            <i>Almoço</i>: 10:30h-14:30h
+            <i>Jantar</i>: 17:30h-20:00h
+        <b>Letras</b>:
+            <i>Almoço</i>: 11:15h-14:00h
+            <i>Jantar</i>: 17:30h-20:00h
 
-<i>Fim de semana e Feriados</i> (Somente <b>Central</b>):
-    <i>Almoço</i>: 12:00h-14:00h
-    <i>Jantar</i>: 17:00h-19:15h
-"""
+        <i>Fim de semana e Feriados</i> (Somente <b>Central</b>):
+            <i>Almoço</i>: 12:00h-14:00h
+            <i>Jantar</i>: 17:00h-19:15h
+        """
 
 REGEXP_CARACTERES_ACEITAVEIS = re.compile('[^a-z0-9 ]')
 REGEXP_ESPACOS = re.compile('[ ]+')
@@ -47,9 +47,6 @@ REGEXP_CARDAPIO_SEMANA = re.compile('(%s) de (%s)' %
 
 
 class YourBot(telepot.Bot):
-    logging.basicConfig(filename=LOG_BOT, level=logging.INFO,
-                        format='%(asctime)s\t%(levelname)s\t%(message)s')
-
     def __init__(self, *args, **kwargs):
         super(YourBot, self).__init__(*args, **kwargs)
         self.cardapio = Cardapio.Cardapio()
@@ -60,7 +57,7 @@ class YourBot(telepot.Bot):
     def on_chat_message(self, msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
         if 'text' in msg:
-            txt = msg['text']
+            txt = msg['text'].lower()
             reply_markup = None
             if '/start' in txt or '/help' in txt:
               response = MENSAGEM_START
@@ -82,8 +79,11 @@ class YourBot(telepot.Bot):
                 response = self.cardapio.almoco_hoje()
             elif 'janta' in txt:
                 response = self.cardapio.janta_hoje()
-            else:
+            elif 'bandeja' in txt:
                 response = self.cardapio.cardapio_mais_proximo()
+            else:
+                logging.info(msg)
+                return
 
             bot.sendMessage(chat_id, response, parse_mode='html', reply_markup=reply_markup)
 
