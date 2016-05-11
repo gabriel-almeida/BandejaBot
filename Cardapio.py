@@ -17,6 +17,11 @@ ORDEM_REFEICAO = ['almoço', 'jantar']
 MESES_ANO = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto',
              'setembro', 'outubro', 'novembro', 'dezembro']
 
+COMIDAS_IMPORTANTES = ["Kibe", "Quiche", "Almôndegas", "Peixe", "Cocada", "Doce"]
+
+VERBO_SER = ["foi", "é", "será"]
+VERBO_TER = ["tivemos", "temos", "teremos"]
+
 REGEXP_TITULO = re.compile('.*Cardápio Semanal - de (?P<inicio>[0-9]+) a [0-9]+ de (?P<mes>[a-zA-Z]+) de (?P<ano>[0-9]+).*')
 TEMPO_ATUALIZACAO_AGRESSIVA = 5*60 # 5 minutos
 TEMPO_ATUALIZACAO_PROATIVA = 3*60*60 # 3 horas
@@ -28,7 +33,43 @@ class Cardapio():
     def __init__(self):
         self.cardapio = dict()
         self.ultima_atualizacao = None
+        self.destaques_semana = []
         self.ultima_hash = None
+
+    def conjugacao_verbal(self, dia_semana):
+        dia_semana_atual = datetime.datetime.today().weekday()
+        id_dia_semana = DIAS_DA_SEMANA.index(dia_semana)
+
+        if id_dia_semana < dia_semana_atual:
+            return 0
+        if id_dia_semana == dia_semana_atual:
+            return 1
+        if id_dia_semana > dia_semana_atual:
+            return 2
+
+    def __destaca_pratos(self):
+        self.destaques_semana = []
+        for dia in DIAS_DA_SEMANA:
+            for refeicao in ORDEM_REFEICAO:
+
+                destaques_refeicao = []
+                for tipo_prato in ORDEM_CARDAPIO:
+                    prato_atual = self.cardapio[dia][refeicao][tipo_prato]
+                    for comida in COMIDAS_IMPORTANTES:
+                        if comida in prato_atual:
+                            # indice_inicio_comida = prato_atual.find(comida)
+                            # indice_fim_comida = indice_inicio_comida + len(comida)
+                            #
+                            # prato_destacado = prato_atual[:indice_inicio_comida] + "<b>" + \
+                            #                   prato_atual[indice_inicio_comida:indice_fim_comida] +\
+                            #                   "</b>" + prato_atual[indice_fim_comida:]
+                            prato_destacado = '<b>' + prato_atual  + '</b>'
+                            self.cardapio[dia][refeicao][tipo_prato] = prato_destacado
+                            destaques_refeicao += [(tipo_prato, prato_destacado)]
+                            break
+                if len(destaques_refeicao) > 0:
+                    self.destaques_semana += [(dia, refeicao, destaques_refeicao)]
+
 
     def carrega_cardapio(self):
         with urllib.request.urlopen(CARDAPIO_URL) as response:
@@ -68,6 +109,7 @@ class Cardapio():
 
             if hash_cardapio != self.ultima_hash:
                 self.cardapio = cardapio_parseado
+                self.__destaca_pratos()
                 self.ultima_hash = hash_cardapio
 
                 # Na primeira tentativa de atualizacao, tento descobrir a data do cardapio corrente
@@ -101,7 +143,7 @@ class Cardapio():
         """
         agora = datetime.datetime.now()
 
-        if self.is_desatualizado() >=7 and agora.hour >= 8: # só faz sentido se estamos no horário comercial
+        if self.is_desatualizado() and agora.hour >= 7: # só faz sentido se estamos no horário comercial
             tipo_atualizacao = "agressiva"
             delay = TEMPO_ATUALIZACAO_AGRESSIVA
         else:
@@ -169,16 +211,31 @@ class Cardapio():
 
     def compoe_mensagem(self, refeicao, dia_semana, dict_refeicao):
         data = self.calcula_data_cardapio(dia_semana)
-        msg = "O %s de %s (%s/%s) na UFRJ é:\n" % (refeicao.lower(), dia_semana.lower(),
-                                                data.day, data.month)
+        msg = "O %s de %s (%s/%s) na UFRJ %s:\n" % (refeicao.lower(), dia_semana.lower(),
+                                                data.day, data.month, VERBO_SER[self.conjugacao_verbal(dia_semana)])
         for prato in ORDEM_CARDAPIO:
-            msg += "<b>%s</b>: %s\n" % (prato, dict_refeicao[prato])
+            msg += "<i>%s</i>: %s\n" % (prato, dict_refeicao[prato])
 
         if self.is_desatualizado():
             msg += "\nO cardápio está <b>desatualizado</b>."
         return msg
 
+    def __enumeracao(self, elementos, conectivo_principal = ', ', conectivo_final=' e '):
+        if len(elementos) == 1:
+            return elementos[0]
+        return conectivo_principal.join(elementos[:-1]) + conectivo_final + elementos[-1]
+
+    def compoe_destaques(self):
+        if len(self.destaques_semana) == 0:
+            return "Esta semana não temos nenhum destaque."
+        txt = ""
+        for dia, refeicao, destaques_refeicao in self.destaques_semana:
+            destaques_txt = self.__enumeracao(["%s (%s)" % (d[1], d[0]) for d in  destaques_refeicao])
+            txt += dia.title() + " " + VERBO_TER[self.conjugacao_verbal(dia)]  + " no " + refeicao  + " " + destaques_txt + ".\n"
+        return txt
+
 if __name__ == '__main__':
     c = Cardapio()
     c.carrega_cardapio()
-    print(c.get_cardapio("almoço", "sábado"))
+    print(c.get_cardapio("almoço", "quarta"))
+    print(c.compoe_destaques())

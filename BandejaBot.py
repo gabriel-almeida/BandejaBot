@@ -14,12 +14,12 @@ LOG_BOT = 'bandejaBot.log'
 MENSAGEM_START = """
         Para obter o cardápio, use os comandos fornecidos ou simplesmente diga a palavras-chave abaixo:
         <b>/almoco</b> e <b>/janta</b>: Retorna o cardápio do dia para o almoço e janta, respectivamente;
-        <b>/bandeja</b> ou qualquer comando não listado: Será respondido o cardápio da próxima refeição \
-        (apartir de 14h é considerado jantar);
+        <b>/bandeja</b>: Será respondido o cardápio da próxima refeição (apartir de 14h é considerado jantar);
         <b>/semana</b>: Cardápio da um dia arbitrário da semana, que o bot irá perguntar, para uma resposta direta,\
         use comandos como <i>Almoço de Segunda</i>;
         <b>/horarios</b>: Horários de funcionamento dos diversos restaurantes;
         <b>/help</b>: Exibe este diálogo.
+        Código-fonte disponível <a href="github.com/gabriel-almeida/BandejaBot">aqui</a>.
         """
 
 MENSAGEM_HORARIOS = """
@@ -63,6 +63,8 @@ class YourBot(telepot.Bot):
               response = MENSAGEM_START
             elif '/horarios' in txt:
               response = MENSAGEM_HORARIOS
+            elif '/destaque' in txt:
+                response = self.cardapio.compoe_destaques()
             elif '/semana' in txt:
                 reply_markup = {'keyboard': [Cardapio.DIAS_DA_SEMANA[0:3], Cardapio.DIAS_DA_SEMANA[3:]]}
                 response = "Qual dia?"
@@ -85,7 +87,8 @@ class YourBot(telepot.Bot):
                 logging.info(msg)
                 return
 
-            bot.sendMessage(chat_id, response, parse_mode='html', reply_markup=reply_markup)
+            bot.sendMessage(chat_id, response, parse_mode='html', reply_markup=reply_markup,
+                            disable_web_page_preview=True)
 
         logging.info(msg)
 
