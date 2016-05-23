@@ -19,6 +19,8 @@ MENSAGEM_START = """
         use comandos como <i>Almoço de Segunda</i>;
         <b>/horarios</b>: Horários de funcionamento dos diversos restaurantes;
         <b>/help</b>: Exibe este diálogo.
+        Última atualização efetiva: %s
+        Inicio da vigência do cardápio atual: %s
         Código-fonte disponível <a href="github.com/gabriel-almeida/BandejaBot">aqui</a>.
         """
 
@@ -38,6 +40,9 @@ MENSAGEM_HORARIOS = """
             <i>Almoço</i>: 12:00h-14:00h
             <i>Jantar</i>: 17:00h-19:15h
         """
+
+FORMATO_DATA_HORA = "%d/%m/%Y %H:%M:%S"
+FORMATO_DATA = "%d/%m/%Y"
 
 REGEXP_CARACTERES_ACEITAVEIS = re.compile('[^a-z0-9 ]')
 REGEXP_ESPACOS = re.compile('[ ]+')
@@ -60,7 +65,8 @@ class YourBot(telepot.Bot):
             txt = msg['text'].lower()
             reply_markup = None
             if '/start' in txt or '/help' in txt:
-              response = MENSAGEM_START
+              response = MENSAGEM_START % (self.cardapio.ultima_atualizacao.strftime(FORMATO_DATA_HORA),
+                                           self.cardapio.data_inicio_vigencia().strftime(FORMATO_DATA))
             elif '/horarios' in txt:
               response = MENSAGEM_HORARIOS
             elif '/destaque' in txt:
