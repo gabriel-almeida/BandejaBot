@@ -60,3 +60,9 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+# Backups do editor
+*~
+
+# Diretorio de log
+log/

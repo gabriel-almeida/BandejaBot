@@ -53,9 +53,9 @@ REGEXP_CARDAPIO_SEMANA = re.compile('(%s) de (%s)' %
 
 class YourBot(telepot.Bot):
     def __init__(self, *args, **kwargs):
-        super(YourBot, self).__init__(*args, **kwargs)
         self.cardapio = Cardapio.Cardapio()
         self.cardapio.carrega_cardapio()
+        super(YourBot, self).__init__(*args, **kwargs)
 
     #par sensor-atuador
 
@@ -65,10 +65,14 @@ class YourBot(telepot.Bot):
             txt = msg['text'].lower()
             reply_markup = None
             if '/start' in txt or '/help' in txt:
-              response = MENSAGEM_START % (self.cardapio.ultima_atualizacao.strftime(FORMATO_DATA_HORA),
-                                           self.cardapio.data_inicio_vigencia().strftime(FORMATO_DATA))
+                if self.cardapio.cardapio is not None:
+                    ultima_atualizacao = self.cardapio.ultima_atualizacao.strftime(FORMATO_DATA_HORA)
+                    vigencia = self.cardapio.data_inicio_vigencia().strftime(FORMATO_DATA)
+                    response = MENSAGEM_START % (ultima_atualizacao, vigencia)
+                else:
+                    response = MENSAGEM_START % ("N/A", "N/A")
             elif '/horarios' in txt:
-              response = MENSAGEM_HORARIOS
+                response = MENSAGEM_HORARIOS
             elif '/destaque' in txt:
                 response = self.cardapio.compoe_destaques()
             elif '/semana' in txt:
@@ -115,9 +119,17 @@ class YourBot(telepot.Bot):
 if __name__ == '__main__':
     TOKEN = sys.argv[1]  # get token from command-line
 
-    bot = YourBot(TOKEN)
-    bot.message_loop()
-    print('Listening ...')
+    # Tento a todo custo inicializar o bot
+    # TODO NAO FUNCIONA
+    while True:
+        try:
+            bot = YourBot(TOKEN)
+            bot.message_loop()
+            print('Inicializado...')
+            break
+        except:
+            print("Erro ao inicializar, tentando novamente...")
+            time.sleep(5)
 
     while 1:
         time.sleep(10)

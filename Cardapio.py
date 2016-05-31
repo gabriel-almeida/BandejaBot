@@ -9,6 +9,9 @@ import threading
 
 __author__ = 'gabriel'
 LOG_CARDAPIO = 'log/cardapio.log'
+MSG_ERRO_CARDAPIO = """
+        Um erro ocorreu durante a inicialização do Bot, favor tente novamente daqui a alguns minutos.
+        """
 DIAS_DA_SEMANA = ['segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado', 'domingo']
 ORDEM_CARDAPIO = ['Entrada', 'Prato Principal', 'Prato Vegetariano', 'Guarnição',
                   'Acompanhamento', 'Sobremesa', 'Refresco']
@@ -23,7 +26,8 @@ VERBO_TER = ["tivemos", "temos", "teremos"]
 
 # Constantes do scrapping
 CARDAPIO_URL = 'https://docs.google.com/spreadsheets/d/1YvCqBrNw5l4EFNplmpRBFrFJpjl4EALlVNDk3pwp_dQ/pubhtml'
-REGEXP_TITULO = re.compile('.*Cardápio Semanal[ ]*-[ ]*de[ ]*(?P<inicio>[0-9]+)[ ]*a[ ]*[0-9]+[ ]*de[ ]*(?P<mes>[a-zA-Z]+)[ ]*de[ ]*(?P<ano>[0-9]+).*')
+REGEXP_TITULO_MEIO_MES = re.compile('de (?P<inicio>\d+) a \d+ de (?P<mes>\w+) de (?P<ano>\d+)', re.LOCALE)
+REGEXP_TITULO_INICIO_MES = re.compile('de (?P<inicio>\d+) de (?P<mes>\w+) a \d+ de \w+ de (?P<ano>\d+)', re.LOCALE)
 REFEICAO_TR_OFFSET = [3, 11]
 TD_OFFSET = 1
 CLASSE_TABLE = "waffle"
@@ -39,33 +43,11 @@ class Cardapio():
                         format='%(asctime)s\t%(levelname)s\t%(message)s')
 
     def __init__(self):
-        self.cardapio = dict()
+        self.cardapio = None
         self.ultima_atualizacao = None
         self.data_cardapio = None
         self.destaques_semana = []
         self.ultima_hash = None
-
-    def __conjugacao_verbal(self, dia_semana):
-        """
-            Verifica se dia corrente é passado ou futuro de uma dada data
-        """
-
-        if self.is_desatualizado():
-            # sempre será passado se estiver desatualizado
-            return 0
-        if self.ultima_atualizacao.date() < self.data_inicio_vigencia():
-            # sempre será futuro caso o cardapio esteja adiantado
-            return 2
-
-        dia_semana_atual = datetime.datetime.today().weekday()
-        id_dia_semana = DIAS_DA_SEMANA.index(dia_semana)
-
-        if id_dia_semana < dia_semana_atual:
-            return 0
-        if id_dia_semana == dia_semana_atual:
-            return 1
-        if id_dia_semana > dia_semana_atual:
-            return 2
 
     def __destaca_pratos(self):
         """
@@ -127,7 +109,9 @@ class Cardapio():
             Retorna None senao foi possivel obter esta informacao.
         """
         titulo = soup.find('td', CLASSE_TITULO).contents[0]
-        m = REGEXP_TITULO.match(titulo)
+        m = REGEXP_TITULO_INICIO_MES.search(titulo)
+        if m is None:
+            m = REGEXP_TITULO_MEIO_MES.search(titulo)
         if m is not None:
             dia = int(m.group('inicio'))
             mes = MESES_ANO.index(m.group('mes').lower()) + 1
@@ -139,11 +123,11 @@ class Cardapio():
         """
             Coordena o scraping do cardapio, o destaque de pratos e inicia a logica de atualizacao periodica do cardapio
         """
-        with urllib.request.urlopen(CARDAPIO_URL) as response:
-            html = response.read()
-            logging.info("Cardapio lido de " + CARDAPIO_URL)
-
-            cardapio, data_cardapio = self.__scrap_informacoes_cardapio(html)
+        try:
+            with urllib.request.urlopen(CARDAPIO_URL) as response:
+                html = response.read()
+                logging.info("Cardapio lido de " + CARDAPIO_URL)
+                cardapio, data_cardapio = self.__scrap_informacoes_cardapio(html)
 
             print("Atualizado")
 
@@ -171,26 +155,32 @@ class Cardapio():
                 logging.info(cardapio_json)
             else:
                 logging.info("Cardápio não atualizado, hash igual ao anterior")
-
             self.__agenda_atualizacao()
+        except :
+            print("Ocorreu um erro")
+            logging.info("Ocorreu um erro, agendando atualizacao agressiva.")
+            self.__agenda_atualizacao(urgente=True)
 
-    def __agenda_atualizacao(self):
+    def __agenda_atualizacao(self, urgente=False):
         """
             Método auxiliar que agenda atualizacoes
             periodicas de acordo com o grau de desatualizacao
         """
         agora = datetime.datetime.now()
-
-        if self.is_desatualizado():
-            if agora.hour >= HORA_INICIO_ATUALIZACAO_AGRESSIVA:
-                tipo_atualizacao = "agressiva"
-                delay = TEMPO_ATUALIZACAO_AGRESSIVA
-            else:
-                # calcula delay ate hora programada
-                delay = (agora.replace(hour = HORA_INICIO_ATUALIZACAO_AGRESSIVA, minute= 0, second=0) - agora).seconds
+        if urgente:
+            delay = TEMPO_ATUALIZACAO_AGRESSIVA
+            tipo_atualizacao = "agressiva"
         else:
-            tipo_atualizacao = "proativa"
-            delay = TEMPO_ATUALIZACAO_PROATIVA
+            if self.is_desatualizado():
+                if agora.hour >= HORA_INICIO_ATUALIZACAO_AGRESSIVA:
+                    tipo_atualizacao = "agressiva"
+                    delay = TEMPO_ATUALIZACAO_AGRESSIVA
+                else:
+                    # calcula delay ate hora programada
+                    delay = (agora.replace(hour = HORA_INICIO_ATUALIZACAO_AGRESSIVA, minute= 0, second=0) - agora).seconds
+            else:
+                tipo_atualizacao = "proativa"
+                delay = TEMPO_ATUALIZACAO_PROATIVA
 
         threading.Timer(interval=delay, function=self.carrega_cardapio).start()
         logging.info("Proxima atualizacao %s agendada para %s" % (tipo_atualizacao,
@@ -235,6 +225,8 @@ class Cardapio():
         return ORDEM_REFEICAO[refeicao], DIAS_DA_SEMANA[weekday]
 
     def get_cardapio(self, refeicao, dia):
+        if self.cardapio is None:
+            return MSG_ERRO_CARDAPIO
         return self.compoe_mensagem(refeicao, dia, self.cardapio[dia][refeicao])
 
     def janta_hoje(self):
@@ -266,6 +258,28 @@ class Cardapio():
         if len(elementos) == 1:
             return elementos[0]
         return conectivo_principal.join(elementos[:-1]) + conectivo_final + elementos[-1]
+
+    def __conjugacao_verbal(self, dia_semana):
+        """
+            Verifica se dia corrente é passado ou futuro de uma dada data
+        """
+
+        if self.is_desatualizado():
+            # sempre será passado se estiver desatualizado
+            return 0
+        if self.ultima_atualizacao.date() < self.data_inicio_vigencia():
+            # sempre será futuro caso o cardapio esteja adiantado
+            return 2
+
+        dia_semana_atual = datetime.datetime.today().weekday()
+        id_dia_semana = DIAS_DA_SEMANA.index(dia_semana)
+
+        if id_dia_semana < dia_semana_atual:
+            return 0
+        if id_dia_semana == dia_semana_atual:
+            return 1
+        if id_dia_semana > dia_semana_atual:
+            return 2
 
     def compoe_destaques(self):
         if len(self.destaques_semana) == 0:
