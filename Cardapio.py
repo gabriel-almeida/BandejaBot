@@ -28,6 +28,7 @@ VERBO_TER = ["tivemos", "temos", "teremos"]
 CARDAPIO_URL = 'https://docs.google.com/spreadsheets/d/1YvCqBrNw5l4EFNplmpRBFrFJpjl4EALlVNDk3pwp_dQ/pubhtml'
 REGEXP_TITULO_MEIO_MES = re.compile('de (?P<inicio>\d+) a \d+ de (?P<mes>\w+) de (?P<ano>\d+)', re.LOCALE)
 REGEXP_TITULO_INICIO_MES = re.compile('de (?P<inicio>\d+) de (?P<mes>\w+) a \d+ de \w+ de (?P<ano>\d+)', re.LOCALE)
+REGEXP_BLANK_SPACE = re.compile('[\s]+')
 REFEICAO_TR_OFFSET = [3, 11]
 TD_OFFSET = 1
 CLASSE_TABLE = "waffle"
@@ -81,7 +82,7 @@ class Cardapio():
             row = table_rows[tr_offset + id_prato_cardapio]
             elem = row.find_all("td")[TD_OFFSET + id_dia_semana]
 
-            comida = elem.contents[0]
+            comida = elem.get_text()
             prato = ORDEM_CARDAPIO[id_prato_cardapio]
             refeicao_dict[prato] = comida
         return refeicao_dict
@@ -108,7 +109,8 @@ class Cardapio():
             Coleta a data do titulo do cardápio via expressao regular.
             Retorna None senao foi possivel obter esta informacao.
         """
-        titulo = soup.find('td', CLASSE_TITULO).contents[0]
+        titulo = soup.find('td', CLASSE_TITULO).get_text()
+        titulo = REGEXP_BLANK_SPACE.sub(' ', titulo)
         m = REGEXP_TITULO_INICIO_MES.search(titulo)
         if m is None:
             m = REGEXP_TITULO_MEIO_MES.search(titulo)
@@ -129,7 +131,7 @@ class Cardapio():
                 logging.info("Cardapio lido de " + CARDAPIO_URL)
                 cardapio, data_cardapio = self.__scrap_informacoes_cardapio(html)
 
-            print("Atualizado")
+            print("Cardapio atualizado")
 
             # Logica de atualizacao
             cardapio_json = json.dumps(cardapio, sort_keys=True)
