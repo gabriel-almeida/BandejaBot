@@ -202,11 +202,11 @@ class TelegramBot:
         jobs = updater.job_queue
         # jobs.put(telegram.ext.Job(self.manda_log, 60, repeat=True))
 
-        updater.start_webhook(port=port, url_path=TOKEN)
+        updater.start_webhook(listen=webhook_url, port=port, url_path=TOKEN)
         # updater.bot.setWebhook(webhook_url + "/" + TOKEN)
 
-        logging.info("Bot Iniciado", "Porta:", port,
-                     "URL:", webhook_url)
+        logging.info("Bot Iniciado Porta: " + port +
+                     " URL: " + webhook_url)
         logging.info(str(updater.bot.get_me()))
         # self.manda_log(updater.bot, None)
         updater.idle()
@@ -217,7 +217,7 @@ if __name__ == '__main__':
     ID_MESTRE = sys.argv[2]
     PORT = int(sys.argv[3])
     APP_NAME = "bandejabot"
-    URL = "https://%s.herokuapp.com" % APP_NAME
+    URL = "%s.herokuapp.com" % APP_NAME
     IP = "127.0.0.1"
     LOG_BOT = 'bandeja_bot.log'
 
