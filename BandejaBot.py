@@ -2,9 +2,11 @@ import sys
 import Cardapio
 import logging
 import re
+import datetime
 import telegram
 import telegram.ext
-
+import gzip
+import shutil
 
 class BandejaBot:
     MENSAGEM_START = """
@@ -91,6 +93,14 @@ class BandejaBot:
         return response
 
 
+def comprime_arq(entrada):
+    nome_saida = entrada + ".gz"
+    with open(entrada, 'rb') as f_in:
+        with gzip.open(nome_saida, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    return nome_saida
+
+
 class TelegramBot:
     REGEXP_CARDAPIO_SEMANA = re.compile('(%s) de (%s)' %
                                         ("|".join(Cardapio.ORDEM_REFEICAO), "|".join(Cardapio.DIAS_DA_SEMANA)))
@@ -173,8 +183,12 @@ class TelegramBot:
         TelegramBot.envio_mensagem_padrao(bot, update, texto_resposta)
 
     def heartbeat(self, bot, job):
-        bot.sendMessage(self.id_mestre, text="Beep",
+        bot.sendMessage(self.id_mestre, text="Beep: " + str(datetime.datetime.now()),
                         disable_web_page_preview=True, parse_mode="html")
+
+    def manda_log(self, bot, job):
+        saida = comprime_arq(self.log_file)
+        bot.sendDocument(self.id_mestre, document=open(saida, 'rb'))
 
     def inicia_bot(self, token, port, webhook_url):
         updater = telegram.ext.Updater(token)
@@ -199,7 +213,8 @@ class TelegramBot:
         updater.dispatcher.add_error_handler(TelegramBot.callback_erro)
 
         jobs = updater.job_queue
-        jobs.put(telegram.ext.Job(self.heartbeat, 10, repeat=False))
+        # jobs.put(telegram.ext.Job(self.heartbeat, 60*60, repeat=True))
+        jobs.put(telegram.ext.Job(self.manda_log, 60*30, repeat=True))
 
         logging.info("Bot Iniciando. Porta: " + str(port) +
                      " URL: " + webhook_url)
@@ -220,11 +235,8 @@ if __name__ == '__main__':
     URL = "https://%s.herokuapp.com" % APP_NAME
     LOG_BOT = 'bandeja_bot.log'
 
-    logging.basicConfig(filename="bandejabot.log", filemode='a', level=logging.INFO,
+    logging.basicConfig(filename=LOG_BOT, filemode='a', level=logging.INFO,
                         format='%(asctime)s\t%(levelname)s\t%(message)s')
-
-    f = open("huahahua.txt", 'w')
-    f.write("huauhauhhau")
 
     bot = TelegramBot(LOG_BOT, ID_MESTRE)
     bot.inicia_bot(TOKEN, PORT, URL)
