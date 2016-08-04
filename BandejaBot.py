@@ -214,7 +214,7 @@ class TelegramBot:
 if __name__ == '__main__':
     TOKEN = sys.argv[1]
     ID_MESTRE = sys.argv[2]
-    PORT = sys.argv[3]
+    PORT = int(sys.argv[3])
     APP_NAME = "bandejabot"
     URL = "https://%s.herokuapp.com" % APP_NAME
     IP = "127.0.0.1"
