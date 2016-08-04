@@ -1,1 +1,1 @@
-weg: python BandejaBot.py <BOT_API>
+web: python BandejaBot.py 218356444:AAF3mlJ0Tz6p10Fbl10gd5qHxI33jlVYwVU

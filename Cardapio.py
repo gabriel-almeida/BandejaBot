@@ -8,7 +8,6 @@ import hashlib
 import threading
 
 __author__ = 'gabriel'
-LOG_CARDAPIO = 'log/cardapio.log'
 MSG_ERRO_CARDAPIO = """
         Um erro ocorreu durante a inicialização do Bot, favor tente novamente daqui a alguns minutos.
         """
@@ -39,10 +38,9 @@ TEMPO_ATUALIZACAO_AGRESSIVA = 5*60 # 5 minutos
 TEMPO_ATUALIZACAO_PROATIVA = 3*60*60 # 3 horas
 HORA_INICIO_ATUALIZACAO_AGRESSIVA = 8 # apartir das 8 horas comeco a tentar atualizar agressivamente
 
-class Cardapio():
-    logging.basicConfig(filename=LOG_CARDAPIO, level=logging.INFO,
-                        format='%(asctime)s\t%(levelname)s\t%(message)s')
+logger = logging.getLogger()
 
+class Cardapio():
     def __init__(self):
         self.cardapio = None
         self.ultima_atualizacao = None
@@ -128,10 +126,8 @@ class Cardapio():
         try:
             with urllib.request.urlopen(CARDAPIO_URL) as response:
                 html = response.read()
-                logging.info("Cardapio lido de " + CARDAPIO_URL)
+                logger.info("Cardapio lido de " + CARDAPIO_URL)
                 cardapio, data_cardapio = self.__scrap_informacoes_cardapio(html)
-
-            print("Cardapio atualizado")
 
             # Logica de atualizacao
             cardapio_json = json.dumps(cardapio, sort_keys=True)
@@ -146,21 +142,19 @@ class Cardapio():
                 # Se por qualquer motivo nao consegui a data do cardapio, utilizo a data corrente
                 if data_cardapio == None:
                     self.data_cardapio = self.ultima_atualizacao
-                    print("Data nao coletada, usando a data corrente")
-                    logging.info("Nao foi possivel obter data do cardapio, usando data corrente: "
+                    logger.info("Nao foi possivel obter data do cardapio, usando data corrente: "
                                  + str(self.data_cardapio))
                 else:
                     self.data_cardapio = data_cardapio
-                    logging.info("Data de vigência obtida do cardapio: " + str(self.data_cardapio))
+                    logger.info("Data de vigência obtida do cardapio: " + str(self.data_cardapio))
 
-                logging.info("Cardápio atualizado: " + self.ultima_hash)
-                logging.info(cardapio_json)
+                logger.info("Cardápio atualizado: " + self.ultima_hash)
+                logger.info(cardapio_json)
             else:
-                logging.info("Cardápio não atualizado, hash igual ao anterior")
+                logger.info("Cardápio não atualizado, hash igual ao anterior")
             self.__agenda_atualizacao()
         except :
-            print("Ocorreu um erro")
-            logging.info("Ocorreu um erro, agendando atualizacao agressiva.")
+            logger.info("Ocorreu um erro, agendando atualizacao agressiva.")
             self.__agenda_atualizacao(urgente=True)
 
     def __agenda_atualizacao(self, urgente=False):
@@ -185,7 +179,7 @@ class Cardapio():
                 delay = TEMPO_ATUALIZACAO_PROATIVA
 
         threading.Timer(interval=delay, function=self.carrega_cardapio).start()
-        logging.info("Proxima atualizacao %s agendada para %s" % (tipo_atualizacao,
+        logger.info("Proxima atualizacao %s agendada para %s" % (tipo_atualizacao,
                                                                   agora + datetime.timedelta(seconds=delay)))
 
     def is_desatualizado(self):
