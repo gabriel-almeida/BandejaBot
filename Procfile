@@ -1,1 +1,1 @@
-web: python BandejaBot.py 218356444:AAF3mlJ0Tz6p10Fbl10gd5qHxI33jlVYwVU
+web: python BandejaBot.py $TOKEN $ID_MESTRE
