@@ -205,12 +205,11 @@ class TelegramBot:
         logging.info("Bot Iniciando. Porta: " + str(port) +
                      " URL: " + webhook_url)
 
-        updater.start_webhook(listen=webhook_url, port=port, url_path=TOKEN)
-        # updater.bot.setWebhook(webhook_url + "/" + TOKEN)
+        updater.start_webhook(listen="127.0.0.1", port=port, url_path=TOKEN)
+        updater.bot.setWebhook(webhook_url + "/" + TOKEN)
         self.manda_log(updater.bot, None)
 
         logging.info(str(updater.bot.get_me()))
-        # self.manda_log(updater.bot, None)
         updater.idle()
 
 
