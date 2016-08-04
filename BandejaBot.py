@@ -207,7 +207,6 @@ class TelegramBot:
 
         updater.start_webhook(listen=ip, port=port, url_path=token)
         updater.bot.setWebhook(webhook_url + "/" + TOKEN)
-        updater.start_polling()
 
         logging.info("Bot Iniciado")
         logging.info(str(updater.bot.get_me()))
@@ -221,7 +220,7 @@ if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', '5000'))
     APP_NAME = "bandejabot"
     URL = "https://%s.herokuapp.com" % APP_NAME
-    IP = "0.0.0.0"
+    IP = "127.0.0.1"
     LOG_BOT = 'bandeja_bot.log'
 
     logging.basicConfig(level=logging.INFO, format='%(asctime)s\t%(levelname)s\t%(message)s')
