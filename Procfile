@@ -1,0 +1,1 @@
+weg: python BandejaBot.py <BOT_API>
