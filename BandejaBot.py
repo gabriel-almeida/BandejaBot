@@ -202,7 +202,7 @@ class TelegramBot:
         jobs = updater.job_queue
         # jobs.put(telegram.ext.Job(self.manda_log, 60, repeat=True))
 
-        updater.start_webhook(url_path=TOKEN)
+        updater.start_webhook(port=port, url_path=TOKEN)
         # updater.bot.setWebhook(webhook_url + "/" + TOKEN)
 
         logging.info("Bot Iniciado")
