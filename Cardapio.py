@@ -38,9 +38,9 @@ TEMPO_ATUALIZACAO_AGRESSIVA = 5*60 # 5 minutos
 TEMPO_ATUALIZACAO_PROATIVA = 3*60*60 # 3 horas
 HORA_INICIO_ATUALIZACAO_AGRESSIVA = 8 # apartir das 8 horas comeco a tentar atualizar agressivamente
 
-logger = logging.getLogger()
-
 class Cardapio():
+    logger = logging.getLogger()
+
     def __init__(self):
         self.cardapio = None
         self.ultima_atualizacao = None
@@ -126,7 +126,7 @@ class Cardapio():
         try:
             with urllib.request.urlopen(CARDAPIO_URL) as response:
                 html = response.read()
-                logger.info("Cardapio lido de " + CARDAPIO_URL)
+                self.logger.info("Cardapio lido de " + CARDAPIO_URL)
                 cardapio, data_cardapio = self.__scrap_informacoes_cardapio(html)
 
             # Logica de atualizacao
@@ -142,19 +142,19 @@ class Cardapio():
                 # Se por qualquer motivo nao consegui a data do cardapio, utilizo a data corrente
                 if data_cardapio == None:
                     self.data_cardapio = self.ultima_atualizacao
-                    logger.info("Nao foi possivel obter data do cardapio, usando data corrente: "
+                    self.logger.info("Nao foi possivel obter data do cardapio, usando data corrente: "
                                  + str(self.data_cardapio))
                 else:
                     self.data_cardapio = data_cardapio
-                    logger.info("Data de vigência obtida do cardapio: " + str(self.data_cardapio))
+                    self.logger.info("Data de vigência obtida do cardapio: " + str(self.data_cardapio))
 
-                logger.info("Cardápio atualizado: " + self.ultima_hash)
-                logger.info(cardapio_json)
+                self.logger.info("Cardápio atualizado: " + self.ultima_hash)
+                self.logger.info(cardapio_json)
             else:
-                logger.info("Cardápio não atualizado, hash igual ao anterior")
+                self.logger.info("Cardápio não atualizado, hash igual ao anterior")
             self.__agenda_atualizacao()
         except :
-            logger.info("Ocorreu um erro, agendando atualizacao agressiva.")
+            self.logger.info("Ocorreu um erro, agendando atualizacao agressiva.")
             self.__agenda_atualizacao(urgente=True)
 
     def __agenda_atualizacao(self, urgente=False):
@@ -179,7 +179,7 @@ class Cardapio():
                 delay = TEMPO_ATUALIZACAO_PROATIVA
 
         threading.Timer(interval=delay, function=self.carrega_cardapio).start()
-        logger.info("Proxima atualizacao %s agendada para %s" % (tipo_atualizacao,
+        self.logger.info("Proxima atualizacao %s agendada para %s" % (tipo_atualizacao,
                                                                   agora + datetime.timedelta(seconds=delay)))
 
     def is_desatualizado(self):

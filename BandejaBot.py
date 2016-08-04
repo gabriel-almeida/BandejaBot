@@ -46,6 +46,7 @@ class BandejaBot:
 
     def __init__(self):
         self.cardapio = Cardapio.Cardapio()
+        self.cardapio.carrega_cardapio()
 
     def start(self):
         if self.cardapio.cardapio is not None:
@@ -97,8 +98,9 @@ class TelegramBot:
     REGEXP_DIAS_SEMANA = re.compile('(%s)' % "|".join(Cardapio.DIAS_DA_SEMANA))
     MENSAGEM_ERRO = "Um erro ocorreu."
 
-    def __init__(self):
-        pass
+    def __init__(self, log_file, id_mestre):
+        self.id_mestre = id_mestre
+        self.log_file = log_file
 
     @staticmethod
     def envio_mensagem_padrao(bot, update, resposta, teclado=None):
@@ -171,6 +173,13 @@ class TelegramBot:
         texto_resposta = self.bandeja.cardapio_semana(resultado[0], resultado[1])
         TelegramBot.envio_mensagem_padrao(bot, update, texto_resposta)
 
+    def manda_log(self, bot, job):
+        arquivo = open(self.log_file).read()
+        if len(arquivo) > 10:
+            # os.remove(self.log_file)
+            bot.sendMessage(self.id_mestre, text=arquivo,
+                            disable_web_page_preview=True, parse_mode="html")
+
     def inicia_bot(self, token, ip, port, webhook_url):
         updater = telegram.ext.Updater(token)
         self.bandeja = BandejaBot()
@@ -193,23 +202,29 @@ class TelegramBot:
 
         updater.dispatcher.add_error_handler(TelegramBot.callback_erro)
 
-        updater.start_webhook(listen=ip, port=port, url_path=token)
-        updater.bot.setWebhook(webhook_url + "/" + TOKEN)
+        jobs = updater.job_queue
+        jobs.put(telegram.ext.Job(self.manda_log, 60, repeat=True))
+
+        # updater.start_webhook(listen=ip, port=port, url_path=token)
+        # updater.bot.setWebhook(webhook_url + "/" + TOKEN)
+        updater.start_polling()
 
         logging.info("Bot Iniciado")
         logging.info(str(updater.bot.get_me()))
+        # self.manda_log(updater.bot, None)
         updater.idle()
 
 
 if __name__ == '__main__':
     TOKEN = sys.argv[1]
+    ID_MESTRE = sys.argv[2]
     PORT = int(os.environ.get('PORT', '5000'))
     APP_NAME = "bandejabot"
     URL = "https://%s.herokuapp.com" % APP_NAME
     IP = "0.0.0.0"
     LOG_BOT = 'bandeja_bot.log'
 
-    logging.basicConfig(filename=LOG_BOT, level=logging.INFO, format='%(asctime)s\t%(levelname)s\t%(message)s')
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s\t%(levelname)s\t%(message)s')
 
-    bot = TelegramBot()
+    bot = TelegramBot(LOG_BOT, ID_MESTRE)
     bot.inicia_bot(TOKEN, IP, PORT, APP_NAME)
