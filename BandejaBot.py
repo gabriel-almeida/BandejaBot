@@ -173,7 +173,7 @@ class TelegramBot:
         TelegramBot.envio_mensagem_padrao(bot, update, texto_resposta)
 
     def heartbeat(self, bot, job):
-        bot.sendMessage(self.id_mestre, text="Beep",
+        bot.sendMessage(self.id_mestre, text=len(open("bandeja_bot.log").read()),
                         disable_web_page_preview=True, parse_mode="html")
 
     def inicia_bot(self, token, port, webhook_url):
@@ -222,9 +222,6 @@ if __name__ == '__main__':
 
     logging.basicConfig(filename="bandejabot.log", filemode='a', level=logging.INFO,
                         format='%(asctime)s\t%(levelname)s\t%(message)s')
-
-    f = open("huahahua.txt", 'w')
-    f.write("huauhauhhau")
 
     bot = TelegramBot(LOG_BOT, ID_MESTRE)
     bot.inicia_bot(TOKEN, PORT, URL)
