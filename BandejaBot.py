@@ -208,6 +208,7 @@ class TelegramBot:
 
         updater.start_webhook(listen="0.0.0.0", port=port, url_path=token,
                               webhook_url=webhook_url + "/" + TOKEN)
+        updater.bot.setWebhook(webhook_url + "/" + TOKEN)
 
         logging.info(str(updater.bot.get_me()))
         updater.idle()
