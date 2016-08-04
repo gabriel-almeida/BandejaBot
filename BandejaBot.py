@@ -5,7 +5,7 @@ import re
 import telegram
 import telegram.ext
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s\t%(levelname)s\t%(message)s')
+logging.basicConfig(filename="bandejabot.log", level=logging.INFO, format='%(asctime)s\t%(levelname)s\t%(message)s')
 logger = logging.getLogger()
 
 class BandejaBot:
