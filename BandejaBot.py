@@ -199,13 +199,14 @@ class TelegramBot:
 
         updater.dispatcher.add_error_handler(TelegramBot.callback_erro)
 
-        jobs = updater.job_queue
+        # jobs = updater.job_queue
         # jobs.put(telegram.ext.Job(self.manda_log, 60, repeat=True))
 
         updater.start_webhook(listen=webhook_url, port=port, url_path=TOKEN)
         # updater.bot.setWebhook(webhook_url + "/" + TOKEN)
+        self.manda_log(updater.bot, None)
 
-        logging.info("Bot Iniciado Porta: " + port +
+        logging.info("Bot Iniciado Porta: " + str(port) +
                      " URL: " + webhook_url)
         logging.info(str(updater.bot.get_me()))
         # self.manda_log(updater.bot, None)
