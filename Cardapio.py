@@ -282,7 +282,7 @@ class Cardapio():
         txt = ""
         for dia, refeicao, destaques_refeicao in self.destaques_semana:
             destaques_txt = self.__enumeracao(["%s (%s)" % (d[1], d[0]) for d in  destaques_refeicao])
-            txt += dia.title() + " (" + refeicao  + "): " + destaques_txt + ".\n"
+            txt += dia.title() + " (" + refeicao + "): " + destaques_txt + ".\n"
         return txt
 
 if __name__ == '__main__':

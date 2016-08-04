@@ -220,7 +220,11 @@ if __name__ == '__main__':
     URL = "https://%s.herokuapp.com" % APP_NAME
     LOG_BOT = 'bandeja_bot.log'
 
-    logging.basicConfig(filename="bandejabot.log", level=logging.INFO, format='%(asctime)s\t%(levelname)s\t%(message)s')
+    logging.basicConfig(filename="bandejabot.log", filemode='a', level=logging.INFO,
+                        format='%(asctime)s\t%(levelname)s\t%(message)s')
+
+    f = open("huahahua.txt", 'w')
+    f.write("huauhauhhau")
 
     bot = TelegramBot(LOG_BOT, ID_MESTRE)
     bot.inicia_bot(TOKEN, PORT, URL)
