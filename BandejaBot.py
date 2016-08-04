@@ -4,8 +4,9 @@ import logging
 import re
 import telegram
 import telegram.ext
-import os
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s\t%(levelname)s\t%(message)s')
+logger = logging.getLogger()
 
 class BandejaBot:
     MENSAGEM_START = """
@@ -125,7 +126,7 @@ class TelegramBot:
         um logging da mensagem recebida antes de chamar o callback
         """
         def _wrapper(update, bot):
-            logging.info(str(update))
+            logger.info(str(update))
             callback(update, bot)
         return _wrapper
 
@@ -177,12 +178,12 @@ class TelegramBot:
         bot.sendMessage(self.id_mestre, text="INICIADO",
                         disable_web_page_preview=True, parse_mode="html")
 
-    def inicia_bot(self, token, ip, port, webhook_url):
+    def inicia_bot(self, token, port, webhook_url):
         updater = telegram.ext.Updater(token)
         self.bandeja = BandejaBot()
 
         updater.dispatcher.add_handler(TelegramBot.cria_handler('start', self.bandeja.start()))
-        updater.dispatcher.add_handler(TelegramBot.cria_handler('start', self.bandeja.start()))
+        updater.dispatcher.add_handler(TelegramBot.cria_handler('help', self.bandeja.start()))
         updater.dispatcher.add_handler(TelegramBot.cria_handler('horarios', self.bandeja.horarios()))
         updater.dispatcher.add_handler(TelegramBot.cria_handler('destaque', self.bandeja.destaques()))
         updater.dispatcher.add_handler(TelegramBot.cria_handler('almoco', self.bandeja.almoco()))
@@ -220,10 +221,7 @@ if __name__ == '__main__':
     PORT = int(sys.argv[3])
     APP_NAME = "bandejabot"
     URL = "https://%s.herokuapp.com" % APP_NAME
-    IP = "127.0.0.1"
     LOG_BOT = 'bandeja_bot.log'
 
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s\t%(levelname)s\t%(message)s')
-
     bot = TelegramBot(LOG_BOT, ID_MESTRE)
-    bot.inicia_bot(TOKEN, IP, PORT, URL)
+    bot.inicia_bot(TOKEN, PORT, URL)
