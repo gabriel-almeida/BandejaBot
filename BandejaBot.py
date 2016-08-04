@@ -5,8 +5,6 @@ import re
 import telegram
 import telegram.ext
 
-logging.basicConfig(filename="bandejabot.log", level=logging.INFO, format='%(asctime)s\t%(levelname)s\t%(message)s')
-logger = logging.getLogger()
 
 class BandejaBot:
     MENSAGEM_START = """
@@ -126,13 +124,13 @@ class TelegramBot:
         um logging da mensagem recebida antes de chamar o callback
         """
         def _wrapper(bot, update):
-            logger.info(str(update))
+            logging.info(str(update))
             callback(bot, update)
         return _wrapper
 
     @staticmethod
     def callback_erro(bot, update, error):
-        logger.info(str(error))
+        logging.info(str(error))
         TelegramBot.envio_mensagem_padrao(bot, update, TelegramBot.MENSAGEM_ERRO)
 
     @staticmethod
@@ -203,14 +201,14 @@ class TelegramBot:
         jobs = updater.job_queue
         jobs.put(telegram.ext.Job(self.heartbeat, 10, repeat=False))
 
-        logger.info("Bot Iniciando. Porta: " + str(port) +
+        logging.info("Bot Iniciando. Porta: " + str(port) +
                      " URL: " + webhook_url)
 
         updater.start_webhook(listen="0.0.0.0", port=port, url_path=token,
                               webhook_url=webhook_url + "/" + TOKEN)
         updater.bot.setWebhook(webhook_url + "/" + TOKEN)
 
-        logger.info(str(updater.bot.get_me()))
+        logging.info(str(updater.bot.get_me()))
         updater.idle()
 
 
@@ -221,6 +219,8 @@ if __name__ == '__main__':
     APP_NAME = "bandejabot"
     URL = "https://%s.herokuapp.com" % APP_NAME
     LOG_BOT = 'bandeja_bot.log'
+
+    logging.basicConfig(filename="bandejabot.log", level=logging.INFO, format='%(asctime)s\t%(levelname)s\t%(message)s')
 
     bot = TelegramBot(LOG_BOT, ID_MESTRE)
     bot.inicia_bot(TOKEN, PORT, URL)
