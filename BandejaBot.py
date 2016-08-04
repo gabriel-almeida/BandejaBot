@@ -174,11 +174,8 @@ class TelegramBot:
         TelegramBot.envio_mensagem_padrao(bot, update, texto_resposta)
 
     def manda_log(self, bot, job):
-        arquivo = open(self.log_file).read()
-        if len(arquivo) > 10:
-            # os.remove(self.log_file)
-            bot.sendMessage(self.id_mestre, text=arquivo,
-                            disable_web_page_preview=True, parse_mode="html")
+        bot.sendMessage(self.id_mestre, text="INICIADO",
+                        disable_web_page_preview=True, parse_mode="html")
 
     def inicia_bot(self, token, ip, port, webhook_url):
         updater = telegram.ext.Updater(token)
@@ -217,7 +214,7 @@ class TelegramBot:
 if __name__ == '__main__':
     TOKEN = sys.argv[1]
     ID_MESTRE = sys.argv[2]
-    PORT = int(os.environ.get('PORT', '5000'))
+    PORT = sys.argv[3]
     APP_NAME = "bandejabot"
     URL = "https://%s.herokuapp.com" % APP_NAME
     IP = "127.0.0.1"
