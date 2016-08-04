@@ -202,12 +202,13 @@ class TelegramBot:
         # jobs = updater.job_queue
         # jobs.put(telegram.ext.Job(self.manda_log, 60, repeat=True))
 
+        logging.info("Bot Iniciando. Porta: " + str(port) +
+                     " URL: " + webhook_url)
+
         updater.start_webhook(listen=webhook_url, port=port, url_path=TOKEN)
         # updater.bot.setWebhook(webhook_url + "/" + TOKEN)
         self.manda_log(updater.bot, None)
 
-        logging.info("Bot Iniciado Porta: " + str(port) +
-                     " URL: " + webhook_url)
         logging.info(str(updater.bot.get_me()))
         # self.manda_log(updater.bot, None)
         updater.idle()
@@ -225,4 +226,4 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s\t%(levelname)s\t%(message)s')
 
     bot = TelegramBot(LOG_BOT, ID_MESTRE)
-    bot.inicia_bot(TOKEN, IP, PORT, APP_NAME)
+    bot.inicia_bot(TOKEN, IP, PORT, URL)
