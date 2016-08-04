@@ -132,7 +132,7 @@ class TelegramBot:
 
     @staticmethod
     def callback_erro(bot, update, error):
-        logging.info(str(error))
+        logger.info(str(error))
         TelegramBot.envio_mensagem_padrao(bot, update, TelegramBot.MENSAGEM_ERRO)
 
     @staticmethod
@@ -203,14 +203,14 @@ class TelegramBot:
         jobs = updater.job_queue
         jobs.put(telegram.ext.Job(self.heartbeat, 10, repeat=False))
 
-        logging.info("Bot Iniciando. Porta: " + str(port) +
+        logger.info("Bot Iniciando. Porta: " + str(port) +
                      " URL: " + webhook_url)
 
         updater.start_webhook(listen="0.0.0.0", port=port, url_path=token,
                               webhook_url=webhook_url + "/" + TOKEN)
         updater.bot.setWebhook(webhook_url + "/" + TOKEN)
 
-        logging.info(str(updater.bot.get_me()))
+        logger.info(str(updater.bot.get_me()))
         updater.idle()
 
 
