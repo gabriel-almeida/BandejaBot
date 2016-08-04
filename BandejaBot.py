@@ -125,9 +125,9 @@ class TelegramBot:
         Envelopa uma função de callback de forma a sempre realizar
         um logging da mensagem recebida antes de chamar o callback
         """
-        def _wrapper(update, bot):
+        def _wrapper(bot, update):
             logger.info(str(update))
-            callback(update, bot)
+            callback(bot, update)
         return _wrapper
 
     @staticmethod
@@ -174,8 +174,8 @@ class TelegramBot:
         texto_resposta = self.bandeja.cardapio_semana(resultado[0], resultado[1])
         TelegramBot.envio_mensagem_padrao(bot, update, texto_resposta)
 
-    def manda_log(self, bot, job):
-        bot.sendMessage(self.id_mestre, text="INICIADO",
+    def heartbeat(self, bot, job):
+        bot.sendMessage(self.id_mestre, text="Beep",
                         disable_web_page_preview=True, parse_mode="html")
 
     def inicia_bot(self, token, port, webhook_url):
@@ -200,16 +200,15 @@ class TelegramBot:
 
         updater.dispatcher.add_error_handler(TelegramBot.callback_erro)
 
-        # jobs = updater.job_queue
-        # jobs.put(telegram.ext.Job(self.manda_log, 60, repeat=True))
+        jobs = updater.job_queue
+        jobs.put(telegram.ext.Job(self.heartbeat, 10, repeat=True))
 
         logging.info("Bot Iniciando. Porta: " + str(port) +
                      " URL: " + webhook_url)
 
         updater.start_webhook(listen="0.0.0.0", port=port, url_path=token,
                               webhook_url=webhook_url + "/" + TOKEN)
-        updater.bot.setWebhook(webhook_url + "/" + TOKEN)
-        self.manda_log(updater.bot, None)
+        # updater.bot.setWebhook(webhook_url + "/" + TOKEN)
 
         logging.info(str(updater.bot.get_me()))
         updater.idle()
