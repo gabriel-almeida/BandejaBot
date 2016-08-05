@@ -190,6 +190,11 @@ class TelegramBot:
         saida = comprime_arq(self.log_file)
         bot.sendDocument(self.id_mestre, document=open(saida, 'rb'))
 
+    def callback_log(self, bot, update):
+        if self.id_mestre == update.message.chat_id:
+            self.manda_log(bot, None)
+
+
     def inicia_bot(self, token, port, webhook_url):
         updater = telegram.ext.Updater(token)
         self.bandeja = BandejaBot()
@@ -201,6 +206,7 @@ class TelegramBot:
         updater.dispatcher.add_handler(TelegramBot.cria_handler('almoco', self.bandeja.almoco()))
         updater.dispatcher.add_handler(TelegramBot.cria_handler('janta', self.bandeja.janta()))
         updater.dispatcher.add_handler(TelegramBot.cria_handler('bandeja', self.bandeja.bandeja()))
+        updater.dispatcher.add_handler(TelegramBot.cria_handler('log', self.callback_log))
 
         # Teclado com dias da semana
         updater.dispatcher.add_handler(TelegramBot.cria_handler('semana',
@@ -212,9 +218,9 @@ class TelegramBot:
 
         updater.dispatcher.add_error_handler(TelegramBot.callback_erro)
 
+        self.manda_log(updater.bot, None)
         jobs = updater.job_queue
-        # jobs.put(telegram.ext.Job(self.heartbeat, 60*60, repeat=True))
-        jobs.put(telegram.ext.Job(self.manda_log, 60*30, repeat=True))
+        jobs.put(telegram.ext.Job(self.manda_log, 60*60, repeat=True))
 
         logging.info("Bot Iniciando. Porta: " + str(port) +
                      " URL: " + webhook_url)
