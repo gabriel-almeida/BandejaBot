@@ -22,7 +22,8 @@ class BandejaBot:
             Código-fonte disponível <a href="github.com/gabriel-almeida/BandejaBot">aqui</a>.
             """
 
-    MENSAGEM_HORARIOS = """<i>De Segunda a Sexta</i>:
+    MENSAGEM_HORARIOS = """
+                        <i>De Segunda a Sexta</i>:
                         <b>Central</b>:
                             <i>Almoço</i>: 11h-14h
                             <i>Jantar</i>: 17:30h-20:00h
