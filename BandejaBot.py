@@ -191,7 +191,7 @@ class TelegramBot:
         bot.sendDocument(self.id_mestre, document=open(saida, 'rb'))
 
     def callback_log(self, bot, update):
-        if self.id_mestre == update.message.chat_id:
+        if self.id_mestre == str(update.message.chat_id):
             self.manda_log(bot, None)
 
 
