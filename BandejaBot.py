@@ -13,8 +13,8 @@ class BandejaBot:
             Para obter o cardápio, use os comandos fornecidos ou simplesmente diga a palavras-chave abaixo:
             <b>/almoco</b> e <b>/janta</b>: Retorna o cardápio do dia para o almoço e janta, respectivamente;
             <b>/bandeja</b>: Será respondido o cardápio da próxima refeição (apartir de 14h é considerado jantar);
-            <b>/semana</b>: Cardápio da um dia arbitrário da semana, que o bot irá perguntar, para uma resposta direta,\
-            use comandos como <i>Almoço de Segunda</i>;
+            <b>/semana</b>: Cardápio da um dia arbitrário da semana, que o bot irá perguntar. Para uma resposta direta,\
+            use comandos como <i>almoço de segunda</i>;
             <b>/horarios</b>: Horários de funcionamento dos diversos restaurantes;
             <b>/help</b>: Exibe este diálogo.
             Última atualização efetiva: %s
@@ -22,22 +22,21 @@ class BandejaBot:
             Código-fonte disponível <a href="github.com/gabriel-almeida/BandejaBot">aqui</a>.
             """
 
-    MENSAGEM_HORARIOS = """
-            <i>De Segunda a Sexta</i>:
-            <b>Central</b>:
-                <i>Almoço</i>: 11h-14h
-                <i>Jantar</i>: 17:30h-20:00h
-            <b>CT</b>:
-                <i>Almoço</i>: 10:30h-14:30h
-                <i>Jantar</i>: 17:30h-20:00h
-            <b>Letras</b>:
-                <i>Almoço</i>: 11:15h-14:00h
-                <i>Jantar</i>: 17:30h-20:00h
+    MENSAGEM_HORARIOS = """<i>De Segunda a Sexta</i>:
+                        <b>Central</b>:
+                            <i>Almoço</i>: 11h-14h
+                            <i>Jantar</i>: 17:30h-20:00h
+                        <b>CT</b>:
+                            <i>Almoço</i>: 10:30h-14:30h
+                            <i>Jantar</i>: 17:30h-20:00h
+                        <b>Letras</b>:
+                            <i>Almoço</i>: 11:15h-14:00h
+                            <i>Jantar</i>: 17:30h-20:00h
 
-            <i>Fim de semana e Feriados</i> (Somente <b>Central</b>):
-                <i>Almoço</i>: 12:00h-14:00h
-                <i>Jantar</i>: 17:00h-19:15h
-            """
+                        <i>Fim de semana e Feriados</i> (Somente <b>Central</b>):
+                            <i>Almoço</i>: 12:00h-14:00h
+                            <i>Jantar</i>: 17:00h-19:15h
+                        """
 
     FORMATO_DATA_HORA = "%d/%m/%Y %H:%M:%S"
     FORMATO_DATA = "%d/%m/%Y"
@@ -191,7 +190,7 @@ class TelegramBot:
         bot.sendDocument(self.id_mestre, document=open(saida, 'rb'))
 
     def callback_log(self, bot, update):
-        if self.id_mestre == update.message.chat_id:
+        if self.id_mestre == str(update.message.chat_id):
             self.manda_log(bot, None)
 
 

@@ -5,13 +5,13 @@ BandejaBot é um chat bot para o Telegram de cardápios do Restaurante Universit
 
 ##Dependências:
 * Python 3.5
-* Beautyful Soup
-* telepot
+* Beautiful Soup 4.4
+* python-telegram-bot 5.0
 
-Antes de executar, crie um diretório *log* na raiz do projeto e fale com o @BotFather no Telegram para obter seu token de acesso e use-o como argumento do programa *BandejaBot.py*.
+Instale as dependências com o pip, fale com o @BotFather no Telegram para obter seu token de acesso e use-o como argumento do programa *BandejaBot.py*, junto com seu chat_id e a porta em que o programa deverá rodar.
 
 ##TO-DO:
-* Suporte a webhooks (flask?)
-* Logging mais verboso
+* Melhorar o Logging
+* Melhorar documentação
 * Refatoração geral do código
-* Documentação
+* Modificar fonte para não depender especificamente do Heroku
