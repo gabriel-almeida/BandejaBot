@@ -237,8 +237,7 @@ if __name__ == '__main__':
     TOKEN = sys.argv[1]
     ID_MESTRE = sys.argv[2]
     PORT = int(sys.argv[3])
-    APP_NAME = "bandejabot"
-    URL = "https://%s.herokuapp.com" % APP_NAME
+    URL = sys.argv[4]
     LOG_BOT = 'bandeja_bot.log'
 
     logging.basicConfig(filename=LOG_BOT, filemode='a', level=logging.INFO,

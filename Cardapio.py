@@ -13,7 +13,7 @@ MSG_ERRO_CARDAPIO = """
         """
 DIAS_DA_SEMANA = ['segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado', 'domingo']
 ORDEM_CARDAPIO = ['Entrada', 'Prato Principal', 'Prato Vegetariano', 'Guarnição',
-                  'Acompanhamento', 'Sobremesa', 'Refresco']
+                  'Acompanhamento', 'Sobremesa']
 ORDEM_REFEICAO = ['almoço', 'jantar']
 MESES_ANO = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto',
              'setembro', 'outubro', 'novembro', 'dezembro']
@@ -25,8 +25,8 @@ VERBO_TER = ["tivemos", "temos", "teremos"]
 
 # Constantes do scrapping
 CARDAPIO_URL = 'https://docs.google.com/spreadsheets/d/1YvCqBrNw5l4EFNplmpRBFrFJpjl4EALlVNDk3pwp_dQ/pubhtml'
-REGEXP_TITULO_MEIO_MES = re.compile('de (?P<inicio>\d+) a \d+ de (?P<mes>\w+) de (?P<ano>\d+)', re.LOCALE)
-REGEXP_TITULO_INICIO_MES = re.compile('de (?P<inicio>\d+) de (?P<mes>\w+) a \d+ de \w+ de (?P<ano>\d+)', re.LOCALE)
+REGEXP_TITULO_MEIO_MES = re.compile('de (?P<inicio>\d+) a \d+ de (?P<mes>\w+) de (?P<ano>\d+)')
+REGEXP_TITULO_INICIO_MES = re.compile('de (?P<inicio>\d+) de (?P<mes>\w+) a \d+ de \w+ de (?P<ano>\d+)')
 REGEXP_BLANK_SPACE = re.compile('[\s]+')
 REFEICAO_TR_OFFSET = [3, 11]
 TD_OFFSET = 1
