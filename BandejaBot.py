@@ -172,45 +172,52 @@ class TelegramBot:
         TelegramBot.envio_mensagem_padrao(bot, update, texto_resposta)
 
     def inicia_bot(self, token, port, webhook_url):
-        updater = telegram.ext.Updater(token)
         self.bandeja = BandejaBot()
+        
+        logging.info("Iniciando Bot: %s", token)
+        app = telegram.ext.ApplicationBuilder().token(token).connect_timeout(20).pool_timeout(20).get_updates_write_timeout(20).get_updates_read_timeout(20).get_updates_pool_timeout(20).get_updates_connect_timeout(20).connect_timeout(20).build()
 
-        updater.dispatcher.add_handler(TelegramBot.cria_handler('start', self.bandeja.start()))
-        updater.dispatcher.add_handler(TelegramBot.cria_handler('help', self.bandeja.start()))
-        updater.dispatcher.add_handler(TelegramBot.cria_handler('horarios', self.bandeja.horarios()))
-        updater.dispatcher.add_handler(TelegramBot.cria_handler('destaque', self.bandeja.destaques()))
-        updater.dispatcher.add_handler(TelegramBot.cria_handler('almoco', self.bandeja.almoco()))
-        updater.dispatcher.add_handler(TelegramBot.cria_handler('janta', self.bandeja.janta()))
-        updater.dispatcher.add_handler(TelegramBot.cria_handler('bandeja', self.bandeja.bandeja()))
+        app.add_handler(TelegramBot.cria_handler('start', self.bandeja.start()))
+        app.add_error_handler(TelegramBot.callback_erro)
 
-        # Teclado com dias da semana
-        updater.dispatcher.add_handler(TelegramBot.cria_handler('semana',
-                                                                   self.callback_cardapio_lista_semana))
-        updater.dispatcher.add_handler(TelegramBot.cria_handler(self.REGEXP_DIAS_SEMANA,
-                                                                 self.callback_cardapio_lista_refeicao))
-        updater.dispatcher.add_handler(TelegramBot.cria_handler(TelegramBot.REGEXP_CARDAPIO_SEMANA,
-                                                                 self.callback_cardapio_dia_especifico))
+        app.run_polling()
 
-        updater.dispatcher.add_error_handler(TelegramBot.callback_erro)
+        # updater.dispatcher.add_handler(TelegramBot.cria_handler('start', self.bandeja.start()))
+        # updater.dispatcher.add_handler(TelegramBot.cria_handler('help', self.bandeja.start()))
+        # updater.dispatcher.add_handler(TelegramBot.cria_handler('horarios', self.bandeja.horarios()))
+        # updater.dispatcher.add_handler(TelegramBot.cria_handler('destaque', self.bandeja.destaques()))
+        # updater.dispatcher.add_handler(TelegramBot.cria_handler('almoco', self.bandeja.almoco()))
+        # updater.dispatcher.add_handler(TelegramBot.cria_handler('janta', self.bandeja.janta()))
+        # updater.dispatcher.add_handler(TelegramBot.cria_handler('bandeja', self.bandeja.bandeja()))
 
-        if port is None or webhook_url is None:
-            updater.bot.setWebhook("")
-            updater.start_polling(3, 10)
-            logging.info("Bot Iniciando em modo Polling.")
-        else:
-            updater.start_webhook(listen="0.0.0.0", port=port, url_path=token,
-                               webhook_url=webhook_url + "/" + TOKEN)
-            updater.bot.setWebhook(webhook_url + "/" + TOKEN)
-            logging.info("Bot Iniciando. Porta: %s URL: %s", str(port), webhook_url)
+        # # Teclado com dias da semana
+        # updater.dispatcher.add_handler(TelegramBot.cria_handler('semana',
+        #                                                            self.callback_cardapio_lista_semana))
+        # updater.dispatcher.add_handler(TelegramBot.cria_handler(self.REGEXP_DIAS_SEMANA,
+        #                                                          self.callback_cardapio_lista_refeicao))
+        # updater.dispatcher.add_handler(TelegramBot.cria_handler(TelegramBot.REGEXP_CARDAPIO_SEMANA,
+        #                                                          self.callback_cardapio_dia_especifico))
 
-        logging.info(str(updater.bot.get_me()))
-        updater.idle()
+        # updater.dispatcher.add_error_handler(TelegramBot.callback_erro)
+
+        # if port is None or webhook_url is None:
+        #     updater.bot.setWebhook("")
+        #     updater.start_polling(3, 10)
+        #     logging.info("Bot Iniciando em modo Polling.")
+        # else:
+        #     updater.start_webhook(listen="0.0.0.0", port=port, url_path=token,
+        #                        webhook_url=webhook_url + "/" + TOKEN)
+        #     updater.bot.setWebhook(webhook_url + "/" + TOKEN)
+        #     logging.info("Bot Iniciando. Porta: %s URL: %s", str(port), webhook_url)
+
+        # logging.info(str(updater.bot.get_me()))
+        # updater.idle()
 
 
 if __name__ == '__main__':
     TOKEN = sys.argv[1]
     ID_MESTRE = sys.argv[2]
-    
+
     # TODO melhorar parsing do argv com uma lib
     PORT = int(sys.argv[3]) if len(sys.argv) > 3 and sys.argv[3] is not None else None
     URL = sys.argv[4] if len(sys.argv) > 4 else None
