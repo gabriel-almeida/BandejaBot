@@ -2,11 +2,9 @@ import sys
 import Cardapio
 import logging
 import re
-import datetime
 import telegram
 import telegram.ext
-import gzip
-import shutil
+
 
 class BandejaBot:
     MENSAGEM_START = """
@@ -93,23 +91,14 @@ class BandejaBot:
         return response
 
 
-def comprime_arq(entrada):
-    nome_saida = entrada + ".gz"
-    with open(entrada, 'rb') as f_in:
-        with gzip.open(nome_saida, 'wb') as f_out:
-            shutil.copyfileobj(f_in, f_out)
-    return nome_saida
-
-
 class TelegramBot:
     REGEXP_CARDAPIO_SEMANA = re.compile('(%s) de (%s)' %
                                         ("|".join(Cardapio.ORDEM_REFEICAO), "|".join(Cardapio.DIAS_DA_SEMANA)))
     REGEXP_DIAS_SEMANA = re.compile('(%s)' % "|".join(Cardapio.DIAS_DA_SEMANA))
     MENSAGEM_ERRO = "Um erro ocorreu."
 
-    def __init__(self, log_file, id_mestre):
+    def __init__(self, id_mestre):
         self.id_mestre = id_mestre
-        self.log_file = log_file
 
     @staticmethod
     def envio_mensagem_padrao(bot, update, resposta, teclado=None):
@@ -182,19 +171,6 @@ class TelegramBot:
         texto_resposta = self.bandeja.cardapio_semana(resultado[0], resultado[1])
         TelegramBot.envio_mensagem_padrao(bot, update, texto_resposta)
 
-    def heartbeat(self, bot, job):
-        bot.sendMessage(self.id_mestre, text="Beep: " + str(datetime.datetime.now()),
-                        disable_web_page_preview=True, parse_mode="html")
-
-    def manda_log(self, bot, job):
-        saida = comprime_arq(self.log_file)
-        bot.sendDocument(self.id_mestre, document=open(saida, 'rb'))
-
-    def callback_log(self, bot, update):
-        if self.id_mestre == str(update.message.chat_id):
-            self.manda_log(bot, None)
-
-
     def inicia_bot(self, token, port, webhook_url):
         updater = telegram.ext.Updater(token)
         self.bandeja = BandejaBot()
@@ -206,7 +182,6 @@ class TelegramBot:
         updater.dispatcher.add_handler(TelegramBot.cria_handler('almoco', self.bandeja.almoco()))
         updater.dispatcher.add_handler(TelegramBot.cria_handler('janta', self.bandeja.janta()))
         updater.dispatcher.add_handler(TelegramBot.cria_handler('bandeja', self.bandeja.bandeja()))
-        updater.dispatcher.add_handler(TelegramBot.cria_handler('log', self.callback_log))
 
         # Teclado com dias da semana
         updater.dispatcher.add_handler(TelegramBot.cria_handler('semana',
@@ -239,10 +214,9 @@ if __name__ == '__main__':
     # TODO melhorar parsing do argv com uma lib
     PORT = int(sys.argv[3]) if len(sys.argv) > 3 and sys.argv[3] is not None else None
     URL = sys.argv[4] if len(sys.argv) > 4 else None
-    LOG_BOT = 'bandeja_bot.log'
 
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s\t%(levelname)s\t%(message)s')
 
-    bot = TelegramBot(LOG_BOT, ID_MESTRE)
+    bot = TelegramBot(ID_MESTRE)
     bot.inicia_bot(TOKEN, PORT, URL)
