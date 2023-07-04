@@ -218,16 +218,15 @@ class TelegramBot:
 
         updater.dispatcher.add_error_handler(TelegramBot.callback_erro)
 
-        self.manda_log(updater.bot, None)
-        jobs = updater.job_queue
-        jobs.put(telegram.ext.Job(self.manda_log, 60*60, repeat=True))
-
-        logging.info("Bot Iniciando. Porta: " + str(port) +
-                     " URL: " + webhook_url)
-
-        updater.start_webhook(listen="0.0.0.0", port=port, url_path=token,
-                              webhook_url=webhook_url + "/" + TOKEN)
-        updater.bot.setWebhook(webhook_url + "/" + TOKEN)
+        if port is None or webhook_url is None:
+            updater.bot.setWebhook("")
+            updater.start_polling(3, 10)
+            logging.info("Bot Iniciando em modo Polling.")
+        else:
+            updater.start_webhook(listen="0.0.0.0", port=port, url_path=token,
+                               webhook_url=webhook_url + "/" + TOKEN)
+            updater.bot.setWebhook(webhook_url + "/" + TOKEN)
+            logging.info("Bot Iniciando. Porta: %s URL: %s", str(port), webhook_url)
 
         logging.info(str(updater.bot.get_me()))
         updater.idle()
@@ -236,11 +235,13 @@ class TelegramBot:
 if __name__ == '__main__':
     TOKEN = sys.argv[1]
     ID_MESTRE = sys.argv[2]
-    PORT = int(sys.argv[3])
-    URL = sys.argv[4]
+    
+    # TODO melhorar parsing do argv com uma lib
+    PORT = int(sys.argv[3]) if len(sys.argv) > 3 and sys.argv[3] is not None else None
+    URL = sys.argv[4] if len(sys.argv) > 4 else None
     LOG_BOT = 'bandeja_bot.log'
 
-    logging.basicConfig(filename=LOG_BOT, filemode='a', level=logging.INFO,
+    logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s\t%(levelname)s\t%(message)s')
 
     bot = TelegramBot(LOG_BOT, ID_MESTRE)
