@@ -75,3 +75,9 @@ cert/
 
 # Tokens
 Procfile
+.env
+
+# Dev Container
+.local
+.jupyter
+.ipython

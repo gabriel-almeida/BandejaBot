@@ -1,0 +1,13 @@
+services:
+   bandejabot:
+      container_name: bandejabot
+      image: jupyter/scipy-notebook:python-3.10.9
+      user: root
+      environment:
+         NB_USER: gabriel
+         GRANT_SUDO: "yes"
+         CHOWN_HOME: "yes"
+      working_dir: "/home/gabriel"
+      volumes:
+         - ./:/home/gabriel
+      network_mode: "host"
