@@ -136,13 +136,18 @@ class TelegramBot:
         app.add_handler(MessageHandler(filters.Regex(self.REGEXP_DIAS_SEMANA), \
                         self.refeicoes_dia))
 
+        app.add_handler(MessageHandler(None, self.fallback))
         app.add_error_handler(self.error_handler)
 
+        # TODO setup comandos do bot no statup
+
         if self.webhook_url is None or not self.webhook_url.strip():
+            logging.info("Iniciando em modo pooling")
             app.run_polling()
         else:
-            url = f"{self.webhook_url}/${self.token}"
-            app.run_webhook(listen="0.0.0.0", port=self.port, url_path=url)
+            url = f"{self.webhook_url}/{self.token}"
+            logging.info("Iniciando em modo Webhook em %s na porta %s", url, self.port)
+            app.run_webhook(listen="0.0.0.0", port=self.port, webhook_url=url, url_path=self.token)
 
     @log_request
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -171,14 +176,14 @@ class TelegramBot:
     @log_request
     async def semana(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         texto_resposta, lista_teclado = self.bandeja.opcoes_dias_semana()
-        teclado = ReplyKeyboardMarkup(lista_teclado, one_time_keyboard=True)
+        teclado = ReplyKeyboardMarkup(lista_teclado, one_time_keyboard=True, selective=True)
         await update.message.reply_html(texto_resposta, reply_markup=teclado)
 
     @log_request
     async def refeicoes_dia(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         dia_semana = update.message.text
         resposta, lista_teclado = self.bandeja.opcoes_refeicao(dia_semana)
-        teclado = ReplyKeyboardMarkup(lista_teclado, one_time_keyboard=True)
+        teclado = ReplyKeyboardMarkup(lista_teclado, one_time_keyboard=True, selective=True)
         await update.message.reply_html(resposta, reply_markup=teclado)
 
     @log_request
@@ -188,6 +193,10 @@ class TelegramBot:
         resposta = self.bandeja.cardapio_semana(resultado[0], resultado[1])
         await update.message.reply_html(resposta)
 
+    async def fallback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        logging.warning(update.to_json())
+        await update.message.reply_html("Comando não reconhecido")
+    
     async def error_handler(self, update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
         logging.error(str(update))
         await update.message.reply_html(self.MENSAGEM_ERRO)
