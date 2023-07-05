@@ -1,5 +1,4 @@
 import functools
-import sys
 import Cardapio
 import logging
 import re
@@ -95,7 +94,7 @@ def log_request(fn):
     @functools.wraps(fn)
     def decorated(*args, **kwargs):
         try:
-            logging.info("{0} - {1} - {2}".format(fn.__name__, args, kwargs))
+            logging.info(args[1].to_json())
             return fn(*args, **kwargs)
         except Exception as ex:
             logging.error("Exception {0}".format(ex))
@@ -108,86 +107,17 @@ class TelegramBot:
     REGEXP_DIAS_SEMANA = re.compile('(%s)' % "|".join(Cardapio.DIAS_DA_SEMANA))
     MENSAGEM_ERRO = "Um erro ocorreu."
 
-    def __init__(self, id_mestre):
+    def __init__(self, id_mestre, token, port, webhook_url):
         self.id_mestre = id_mestre
+        self.token = token
+        self.port = port
+        self.webhook_url = webhook_url
+        self.bandeja = None
 
-    @staticmethod
-    def envio_mensagem_padrao(bot, update, resposta, teclado=None):
-        """
-        Padrao de envio de respostas deste bot
-        """
-        bot.sendMessage(update.message.chat_id, reply_markup=teclado,
-                        text=resposta, disable_web_page_preview=True, parse_mode="html")
-
-    @staticmethod
-    def callback_resposta_direta(texto_resposta):
-        """
-        Retorna uma funcao lambda que será usada como callback para um hadler.
-        Em especial, este callback apenas responderá o usuario com um texto fixo
-        """
-        return lambda bot, update: TelegramBot.envio_mensagem_padrao(bot, update, resposta=texto_resposta)
-
-    @staticmethod
-    def callback_log_wrapper(callback):
-        """
-        Envelopa uma função de callback de forma a sempre realizar
-        um logging da mensagem recebida antes de chamar o callback
-        """
-        def _wrapper(bot, update):
-            logging.info(str(update))
-            callback(bot, update)
-        return _wrapper
-
-    @staticmethod
-    def callback_erro(bot, update, error):
-        logging.info(str(error))
-        TelegramBot.envio_mensagem_padrao(bot, update, TelegramBot.MENSAGEM_ERRO)
-
-    @staticmethod
-    def cria_handler(comando_ou_regexp, callback_ou_mensagem):
-        """
-        Funcao Utilitária para se criar handlers específicos com o tipo de entrada
-        :param comando_ou_regexp: String de um comando ou regexp que será pareada
-        :param callback_ou_mensagem: funcao de callback ou texto fixo da mensagem
-        :return: Handler construido
-        """
-        if callable(callback_ou_mensagem):
-            callback = callback_ou_mensagem
-        else:
-            callback = TelegramBot.callback_resposta_direta(callback_ou_mensagem)
-
-        callback = TelegramBot.callback_log_wrapper(callback)
-
-        if type(comando_ou_regexp) is str:
-            comando = comando_ou_regexp
-            return telegram.ext.CommandHandler(comando, callback)
-        else:
-            regexp = comando_ou_regexp
-            return telegram.ext.RegexHandler(regexp, callback)
-
-    def callback_cardapio_lista_semana(self, bot, update):
-        texto_resposta, lista_teclado = self.bandeja.opcoes_dias_semana()
-        teclado = telegram.ReplyKeyboardMarkup(lista_teclado, one_time_keyboard=True)
-        TelegramBot.envio_mensagem_padrao(bot, update, texto_resposta, teclado)
-
-    def callback_cardapio_lista_refeicao(self, bot, update):
-        dia_semana = update.message.text
-        texto_resposta, lista_teclado = self.bandeja.opcoes_refeicao(dia_semana)
-        teclado = telegram.ReplyKeyboardMarkup(lista_teclado, one_time_keyboard=True)
-        TelegramBot.envio_mensagem_padrao(bot, update, texto_resposta, teclado)
-
-    def callback_cardapio_dia_especifico(self, bot, update):
-        cardapio_desejado = update.message.text
-        resultado = cardapio_desejado.split(' de ')
-        texto_resposta = self.bandeja.cardapio_semana(resultado[0], resultado[1])
-        TelegramBot.envio_mensagem_padrao(bot, update, texto_resposta)
-
-    def inicia_bot(self, token, port, webhook_url):
+    def inicia_bot(self, ):
         self.bandeja = BandejaBot()
         
-        logging.info("Iniciando Bot: %s", token)
-
-        app = ApplicationBuilder().token(token).connect_timeout(20).pool_timeout(20).get_updates_write_timeout(20).get_updates_read_timeout(20).get_updates_pool_timeout(20).get_updates_connect_timeout(20).connect_timeout(20).build()
+        app = ApplicationBuilder().token(self.token).connect_timeout(20).pool_timeout(20).get_updates_write_timeout(20).get_updates_read_timeout(20).get_updates_pool_timeout(20).get_updates_connect_timeout(20).connect_timeout(20).build()
 
         app.add_handler(CommandHandler("start", self.start))
         app.add_handler(CommandHandler("help", self.start))
@@ -208,73 +138,50 @@ class TelegramBot:
 
         app.add_error_handler(self.error_handler)
 
-
-        # app.add_handler(TelegramBot.cria_handler('start', self.bandeja.start()))
-        # app.add_error_handler(TelegramBot.callback_erro)
-
-        app.run_polling()
-
-        # updater.dispatcher.add_handler(TelegramBot.cria_handler('start', self.bandeja.start()))
-        # updater.dispatcher.add_handler(TelegramBot.cria_handler('help', self.bandeja.start()))
-        # updater.dispatcher.add_handler(TelegramBot.cria_handler('horarios', self.bandeja.horarios()))
-        # updater.dispatcher.add_handler(TelegramBot.cria_handler('destaque', self.bandeja.destaques()))
-        # updater.dispatcher.add_handler(TelegramBot.cria_handler('almoco', self.bandeja.almoco()))
-        # updater.dispatcher.add_handler(TelegramBot.cria_handler('janta', self.bandeja.janta()))
-        # updater.dispatcher.add_handler(TelegramBot.cria_handler('bandeja', self.bandeja.bandeja()))
-
-        # # Teclado com dias da semana
-        # updater.dispatcher.add_handler(TelegramBot.cria_handler('semana',
-        #                                                            self.callback_cardapio_lista_semana))
-        # updater.dispatcher.add_handler(TelegramBot.cria_handler(self.REGEXP_DIAS_SEMANA,
-        #                                                          self.callback_cardapio_lista_refeicao))
-        # updater.dispatcher.add_handler(TelegramBot.cria_handler(TelegramBot.REGEXP_CARDAPIO_SEMANA,
-        #                                                          self.callback_cardapio_dia_especifico))
-
-        # updater.dispatcher.add_error_handler(TelegramBot.callback_erro)
-
-        # if port is None or webhook_url is None:
-        #     updater.bot.setWebhook("")
-        #     updater.start_polling(3, 10)
-        #     logging.info("Bot Iniciando em modo Polling.")
-        # else:
-        #     updater.start_webhook(listen="0.0.0.0", port=port, url_path=token,
-        #                        webhook_url=webhook_url + "/" + TOKEN)
-        #     updater.bot.setWebhook(webhook_url + "/" + TOKEN)
-        #     logging.info("Bot Iniciando. Porta: %s URL: %s", str(port), webhook_url)
-
-        # logging.info(str(updater.bot.get_me()))
-        # updater.idle()
+        if self.webhook_url is None or not self.webhook_url.strip():
+            app.run_polling()
+        else:
+            url = f"{self.webhook_url}/${self.token}"
+            app.run_webhook(listen="0.0.0.0", port=self.port, url_path=url)
 
     @log_request
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_html(self.bandeja.start(), disable_web_page_preview=True)
 
+    @log_request
     async def horarios(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_html(self.bandeja.horarios())
 
+    @log_request
     async def destaques(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_html(self.bandeja.destaques())
 
+    @log_request
     async def almoco(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_html(self.bandeja.almoco())
 
+    @log_request
     async def janta(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_html(self.bandeja.janta())
 
+    @log_request
     async def bandeja_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_html(self.bandeja.bandeja())
     
+    @log_request
     async def semana(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         texto_resposta, lista_teclado = self.bandeja.opcoes_dias_semana()
         teclado = ReplyKeyboardMarkup(lista_teclado, one_time_keyboard=True)
         await update.message.reply_html(texto_resposta, reply_markup=teclado)
 
+    @log_request
     async def refeicoes_dia(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         dia_semana = update.message.text
         resposta, lista_teclado = self.bandeja.opcoes_refeicao(dia_semana)
         teclado = ReplyKeyboardMarkup(lista_teclado, one_time_keyboard=True)
         await update.message.reply_html(resposta, reply_markup=teclado)
 
+    @log_request
     async def cardapio_dia_especifico(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         cardapio_desejado = update.message.text
         resultado = cardapio_desejado.split(' de ')
@@ -282,18 +189,21 @@ class TelegramBot:
         await update.message.reply_html(resposta)
 
     async def error_handler(self, update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+        logging.error(str(update))
         await update.message.reply_html(self.MENSAGEM_ERRO)
 
 if __name__ == '__main__':
-    TOKEN = sys.argv[1]
-    ID_MESTRE = sys.argv[2]
+    import os
 
-    # TODO melhorar parsing do argv com uma lib
-    PORT = int(sys.argv[3]) if len(sys.argv) > 3 and sys.argv[3] is not None else None
-    URL = sys.argv[4] if len(sys.argv) > 4 else None
+    TOKEN = os.getenv("TOKEN")
+    ID_MESTRE = os.getenv("ID_MESTRE")
+
+    URL = os.getenv("URL")
+    PORT = os.getenv("PORT", 3000)
+    PORT = int(PORT) if PORT is not None else None
 
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s\t%(levelname)s\t%(message)s')
 
-    bot = TelegramBot(ID_MESTRE)
-    bot.inicia_bot(TOKEN, PORT, URL)
+    bot = TelegramBot(ID_MESTRE, TOKEN, PORT, URL)
+    bot.inicia_bot()
