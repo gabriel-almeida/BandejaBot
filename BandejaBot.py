@@ -1,9 +1,10 @@
+import functools
 import sys
 import Cardapio
 import logging
 import re
-import telegram
-import telegram.ext
+from telegram import ReplyKeyboardMarkup, Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, StringRegexHandler, filters
 
 
 class BandejaBot:
@@ -20,8 +21,7 @@ class BandejaBot:
             Código-fonte disponível <a href="github.com/gabriel-almeida/BandejaBot">aqui</a>.
             """
 
-    MENSAGEM_HORARIOS = """
-                        <i>De Segunda a Sexta</i>:
+    MENSAGEM_HORARIOS = """<i>De Segunda a Sexta</i>:
                         <b>Central</b>:
                             <i>Almoço</i>: 11h-14h
                             <i>Jantar</i>: 17:30h-20:00h
@@ -90,6 +90,17 @@ class BandejaBot:
         response = self.cardapio.get_cardapio(refeicao=refeicao, dia=dia_semana)
         return response
 
+
+def log_request(fn):
+    @functools.wraps(fn)
+    def decorated(*args, **kwargs):
+        try:
+            logging.info("{0} - {1} - {2}".format(fn.__name__, args, kwargs))
+            return fn(*args, **kwargs)
+        except Exception as ex:
+            logging.error("Exception {0}".format(ex))
+            raise ex
+    return decorated
 
 class TelegramBot:
     REGEXP_CARDAPIO_SEMANA = re.compile('(%s) de (%s)' %
@@ -175,10 +186,31 @@ class TelegramBot:
         self.bandeja = BandejaBot()
         
         logging.info("Iniciando Bot: %s", token)
-        app = telegram.ext.ApplicationBuilder().token(token).connect_timeout(20).pool_timeout(20).get_updates_write_timeout(20).get_updates_read_timeout(20).get_updates_pool_timeout(20).get_updates_connect_timeout(20).connect_timeout(20).build()
 
-        app.add_handler(TelegramBot.cria_handler('start', self.bandeja.start()))
-        app.add_error_handler(TelegramBot.callback_erro)
+        app = ApplicationBuilder().token(token).connect_timeout(20).pool_timeout(20).get_updates_write_timeout(20).get_updates_read_timeout(20).get_updates_pool_timeout(20).get_updates_connect_timeout(20).connect_timeout(20).build()
+
+        app.add_handler(CommandHandler("start", self.start))
+        app.add_handler(CommandHandler("help", self.start))
+        app.add_handler(CommandHandler("horarios", self.horarios))
+        app.add_handler(CommandHandler("destaque", self.destaques))
+
+        app.add_handler(CommandHandler("almoco", self.almoco))
+        app.add_handler(CommandHandler("janta", self.janta))
+        app.add_handler(CommandHandler("bandeja", self.bandeja_cmd))
+
+        app.add_handler(CommandHandler("semana", self.semana))
+
+        # Cardapio da semana precisa vir antes
+        app.add_handler(MessageHandler(filters.Regex(self.REGEXP_CARDAPIO_SEMANA), \
+                        self.cardapio_dia_especifico))
+        app.add_handler(MessageHandler(filters.Regex(self.REGEXP_DIAS_SEMANA), \
+                        self.refeicoes_dia))
+
+        app.add_error_handler(self.error_handler)
+
+
+        # app.add_handler(TelegramBot.cria_handler('start', self.bandeja.start()))
+        # app.add_error_handler(TelegramBot.callback_erro)
 
         app.run_polling()
 
@@ -213,6 +245,44 @@ class TelegramBot:
         # logging.info(str(updater.bot.get_me()))
         # updater.idle()
 
+    @log_request
+    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_html(self.bandeja.start(), disable_web_page_preview=True)
+
+    async def horarios(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_html(self.bandeja.horarios())
+
+    async def destaques(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_html(self.bandeja.destaques())
+
+    async def almoco(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_html(self.bandeja.almoco())
+
+    async def janta(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_html(self.bandeja.janta())
+
+    async def bandeja_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_html(self.bandeja.bandeja())
+    
+    async def semana(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        texto_resposta, lista_teclado = self.bandeja.opcoes_dias_semana()
+        teclado = ReplyKeyboardMarkup(lista_teclado, one_time_keyboard=True)
+        await update.message.reply_html(texto_resposta, reply_markup=teclado)
+
+    async def refeicoes_dia(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        dia_semana = update.message.text
+        resposta, lista_teclado = self.bandeja.opcoes_refeicao(dia_semana)
+        teclado = ReplyKeyboardMarkup(lista_teclado, one_time_keyboard=True)
+        await update.message.reply_html(resposta, reply_markup=teclado)
+
+    async def cardapio_dia_especifico(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        cardapio_desejado = update.message.text
+        resultado = cardapio_desejado.split(' de ')
+        resposta = self.bandeja.cardapio_semana(resultado[0], resultado[1])
+        await update.message.reply_html(resposta)
+
+    async def error_handler(self, update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_html(self.MENSAGEM_ERRO)
 
 if __name__ == '__main__':
     TOKEN = sys.argv[1]
