@@ -5,3 +5,4 @@ disable=
     C0116, # missing-function-docstring
     W0613, # unused-argument
     C0103, # invalid-name
+    W0718, # broad-exception-caught

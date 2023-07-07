@@ -1,12 +1,12 @@
-import urllib.request
-from bs4 import BeautifulSoup
-import logging
 import datetime
-import re
-import json
 import hashlib
+import json
+import logging
+import re
 import threading
+import urllib.request
 
+from bs4 import BeautifulSoup
 
 MSG_ERRO_CARDAPIO = """
         Um erro ocorreu durante a inicialização do Bot, favor tente novamente daqui a alguns minutos.
@@ -52,12 +52,12 @@ VERBO_TER = ["tivemos", "temos", "teremos"]
 # Constantes do scrapping
 CARDAPIO_URL = "https://docs.google.com/spreadsheets/d/1YvCqBrNw5l4EFNplmpRBFrFJpjl4EALlVNDk3pwp_dQ/pubhtml"
 REGEXP_TITULO_MEIO_MES = re.compile(
-    "de (?P<inicio>\d+) a \d+ de (?P<mes>\w+) de (?P<ano>\d+)"
+    r"de (?P<inicio>\d+) a \d+ de (?P<mes>\w+) de (?P<ano>\d+)"
 )
 REGEXP_TITULO_INICIO_MES = re.compile(
-    "de (?P<inicio>\d+) de (?P<mes>\w+) a \d+ de \w+ de (?P<ano>\d+)"
+    r"de (?P<inicio>\d+) de (?P<mes>\w+) a \d+ de \w+ de (?P<ano>\d+)"
 )
-REGEXP_BLANK_SPACE = re.compile("[\s]+")
+REGEXP_BLANK_SPACE = re.compile(r"[\s]+")
 REFEICAO_TR_OFFSET = [3, 11]
 TD_OFFSET = 1
 CLASSE_TABLE = "waffle"
@@ -158,7 +158,7 @@ class Cardapio:
         try:
             with urllib.request.urlopen(CARDAPIO_URL) as response:
                 html = response.read()
-                logging.info("Cardapio lido de " + CARDAPIO_URL)
+                logging.info("Cardapio lido de %s", CARDAPIO_URL)
                 cardapio, data_cardapio = self.__scrap_informacoes_cardapio(html)
 
             # Logica de atualizacao
@@ -172,20 +172,20 @@ class Cardapio:
                 self.ultima_atualizacao = datetime.datetime.today()
 
                 # Se por qualquer motivo nao consegui a data do cardapio, utilizo a data corrente
-                if data_cardapio == None:
+                if data_cardapio is None:
                     self.data_cardapio = self.ultima_atualizacao
                     logging.info(
-                        "Nao foi possivel obter data do cardapio, usando data corrente: "
-                        + str(self.data_cardapio)
+                        "Nao foi possivel obter data do cardapio, usando data corrente: %s",
+                        str(self.data_cardapio),
                     )
                 else:
                     self.data_cardapio = data_cardapio
                     logging.info(
-                        "Data de vigência obtida do cardapio: "
-                        + str(self.data_cardapio)
+                        "Data de vigência obtida do cardapio: %s",
+                        str(self.data_cardapio),
                     )
 
-                logging.info("Cardápio atualizado: " + self.ultima_hash)
+                logging.info("Cardápio atualizado: %s", self.ultima_hash)
                 logging.info(cardapio_json)
             else:
                 logging.info("Cardápio não atualizado, hash igual ao anterior")
@@ -224,8 +224,9 @@ class Cardapio:
 
         threading.Timer(interval=delay, function=self.carrega_cardapio).start()
         logging.info(
-            "Proxima atualizacao %s agendada para %s"
-            % (tipo_atualizacao, agora + datetime.timedelta(seconds=delay))
+            "Proxima atualizacao %s agendada para %s",
+            tipo_atualizacao,
+            agora + datetime.timedelta(seconds=delay),
         )
 
     def is_desatualizado(self):
