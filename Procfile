@@ -1,1 +1,0 @@
-web: python BandejaBot.py $TOKEN $ID_MESTRE $PORT
