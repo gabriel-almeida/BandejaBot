@@ -1,8 +1,9 @@
+import asyncio
 import functools
 import logging
 import re
 
-from telegram import ReplyKeyboardMarkup, Update
+from telegram import Bot, ReplyKeyboardMarkup, Update
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -103,6 +104,22 @@ class BandejaBot:
         response = self.cardapio.get_cardapio(refeicao=refeicao, dia=dia_semana)
         return response
 
+    def comandos(self):
+        return [
+            ("almoco", "Cardápio do dia para o almoço"),
+            ("janta", "Cardápio do dia para a janta"),
+            (
+                "bandeja",
+                "Cardápio da próxima refeição (apartir de 14h é considerado jantar)",
+            ),
+            (
+                "semana",
+                "Cardápio de um dia arbitrário da semana, que o bot irá perguntar. Para uma resposta direta, use comandos como 'almoço de segunda'",
+            ),
+            ("horarios", "Horários de funcionamento dos diversos restaurantes"),
+            ("help", "Exibe o diálogo de ajuda"),
+        ]
+
 
 def log_request(funct):
     @functools.wraps(funct)
@@ -174,7 +191,9 @@ class TelegramBot:
         app.add_handler(MessageHandler(None, self.fallback))
         app.add_error_handler(self.error_handler)
 
-        # TODO setup comandos do bot no statup
+        # Preciso rodar os comandos de inicialização do bot num loop de eventos
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.setup(app.bot))
 
         if self.webhook_url is None or not self.webhook_url.strip():
             logging.info("Iniciando em modo pooling")
@@ -185,6 +204,11 @@ class TelegramBot:
             app.run_webhook(
                 listen="0.0.0.0", port=self.port, webhook_url=url, url_path=self.token
             )
+
+    async def setup(self, bot: Bot) -> None:
+        logging.info("Notificando mestre e configurando comandos")
+        await bot.send_message(self.id_mestre, "Bot iniciado!")
+        await bot.set_my_commands(self.bandeja.comandos())
 
     @log_request
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
