@@ -12,6 +12,15 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "name": "Scrapper",
+            "type": "python",
+            "request": "launch",
+            "program": "Cardapio.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }
