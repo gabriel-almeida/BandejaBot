@@ -30,18 +30,18 @@ class BandejaBot:
 
     MENSAGEM_HORARIOS = """<i>De Segunda a Sexta</i>:
                         <b>Central</b>:
-                            <i>Almoço</i>: 11h-14h
-                            <i>Jantar</i>: 17:30h-20:00h
+                            <i>Almoço</i>: 11h-14:15h
+                            <i>Jantar</i>: 17:30h-20:15h
                         <b>CT</b>:
                             <i>Almoço</i>: 10:30h-14:30h
-                            <i>Jantar</i>: 17:30h-20:00h
+                            <i>Jantar</i>: 17:30h-20:15h
                         <b>Letras</b>:
-                            <i>Almoço</i>: 11:15h-14:00h
-                            <i>Jantar</i>: 17:30h-20:00h
+                            <i>Almoço</i>: 11h-14:15h
+                            <i>Jantar</i>: 17:30h-20:15h
 
                         <i>Fim de semana e Feriados</i> (Somente <b>Central</b>):
                             <i>Almoço</i>: 12:00h-14:00h
-                            <i>Jantar</i>: 17:00h-19:15h
+                            <i>Jantar</i>: 17:30h-19:15h
                         """
 
     FORMATO_DATA_HORA = "%d/%m/%Y %H:%M:%S"
