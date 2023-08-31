@@ -188,7 +188,6 @@ class TelegramBot:
             MessageHandler(filters.Regex(self.REGEXP_DIAS_SEMANA), self.refeicoes_dia)
         )
 
-        app.add_handler(MessageHandler(None, self.fallback))
         app.add_error_handler(self.error_handler)
 
         # Preciso rodar os comandos de inicialização do bot num loop de eventos
@@ -267,12 +266,6 @@ class TelegramBot:
         resultado = cardapio_desejado.split(" de ")
         resposta = self.bandeja.cardapio_semana(resultado[0], resultado[1])
         await update.message.reply_html(resposta)
-
-    async def fallback(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
-        logging.warning(update.to_json())
-        await update.message.reply_html("Comando não reconhecido")
 
     async def error_handler(
         self, update: object, context: ContextTypes.DEFAULT_TYPE
